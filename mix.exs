@@ -8,7 +8,7 @@ defmodule LoggerFileBackend.Mixfile do
     [
       app: :logger_file_backend,
       version: @version,
-      elixir: "~> 1.0",
+      elixir: "~> 1.16",
       package: package(),
       deps: deps(),
       docs: docs()
@@ -41,8 +41,8 @@ defmodule LoggerFileBackend.Mixfile do
 
   defp deps do
     [
-      {:credo, "~> 1.7.5", only: [:dev, :test]},
-      {:ex_doc, ">= 0.32.1", only: :dev, runtime: false}
+      {:credo, "~> 1.7", only: [:dev, :test]},
+      {:ex_doc, "~> 0.34", only: :dev, runtime: false}
     ]
   end
 
