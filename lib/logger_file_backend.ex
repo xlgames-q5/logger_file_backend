@@ -63,6 +63,14 @@ defmodule LoggerFileBackend do
     {:ok, state}
   end
 
+  def code_change(_old_vsn, state, _extra) do
+    {:ok, state}
+  end
+
+  def terminate(_reason, _state) do
+    :ok
+  end
+
   # helpers
 
   defp log_event(_level, _msg, _ts, _md, %{path: nil} = state) do
@@ -112,18 +120,38 @@ defmodule LoggerFileBackend do
   end
 
   defp rename_file(path, keep) do
-    File.rm("#{path}.#{keep}")
+    if keep > 0 do
+      File.rm("#{path}.#{keep}")
 
-    Enum.each((keep - 1)..1, fn x -> File.rename("#{path}.#{x}", "#{path}.#{x + 1}") end)
+      Enum.each((keep - 1)..1, fn x -> File.rename("#{path}.#{x}", "#{path}.#{x + 1}") end)
 
-    case File.rename(path, "#{path}.1") do
+      rename(path, "#{path}.1")
+    else
+      new_path = "#{path}." <> now_local_time_name()
+      rename(path, new_path)
+    end
+  end
+
+  @spec now_local_time_name() :: String.t()
+  defp now_local_time_name() do
+    {{year, month, day}, {hour, min, sec}} = :calendar.local_time()
+
+    "#{padding(year, 4)}-#{padding(month)}-#{padding(day)}-#{padding(hour)}-#{padding(min)}-#{padding(sec)}"
+  end
+
+  defp padding(integer, digit \\ 2, padding_str \\ "0") do
+    integer |> Integer.to_string() |> String.pad_leading(digit, padding_str)
+  end
+
+  defp rename(a, b) do
+    case File.rename(a, b) do
       :ok -> false
       _ -> true
     end
   end
 
   defp rotate(path, %{max_bytes: max_bytes, keep: keep})
-       when is_integer(max_bytes) and is_integer(keep) and keep > 0 do
+       when is_integer(max_bytes) and is_integer(keep) do
     case :file.read_file_info(path, [:raw]) do
       {:ok, file_info(size: size)} ->
         if size >= max_bytes, do: rename_file(path, keep), else: true
