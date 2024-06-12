@@ -127,8 +127,7 @@ defmodule LoggerFileBackend do
 
       rename(path, "#{path}.1")
     else
-      new_path = "#{path}." <> now_local_time_name()
-      rename(path, new_path)
+      rename(path, "#{path}." <> now_local_time_name())
     end
   end
 
@@ -259,6 +258,10 @@ defmodule LoggerFileBackend do
     metadata_filter = Keyword.get(opts, :metadata_filter)
     metadata_reject = Keyword.get(opts, :metadata_reject)
     rotate = Keyword.get(opts, :rotate)
+
+    if Keyword.get(opts, :archive_old_file_on_startup, true) == true and path != nil do
+      rename(path, "#{path}." <> now_local_time_name())
+    end
 
     %{
       state
